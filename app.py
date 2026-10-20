@@ -15,13 +15,19 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+import requests
+from io import BytesIO
 from plotly.subplots import make_subplots
 
 # =====================================================
 # CONFIG
 # =====================================================
-BASE_DIR = Path(r"D:\FILL RATE")
-ARCHIVO = BASE_DIR / "OUTPUT" / "TRAZABILIDAD_BASE.xlsx"
+URL_EXCEL = (
+    "https://newrestgroup-my.sharepoint.com/:x:/g/personal/"
+    "almacen_lima5_newrest_eu/"
+    "IQDMCYC2597RS4_uvH3npDsVAQ-A3cHtvq4xjfflz3oJ5x0"
+    "?download=1"
+)
 MONEDA = "S/"
 
 # Parámetros fijos (ya no hay barra lateral)
@@ -470,30 +476,41 @@ st.markdown(CSS, unsafe_allow_html=True)
 # =====================================================
 # CARGA (con caché)
 # =====================================================
-@st.cache_data(show_spinner="Cargando trazabilidad…")
+
+@st.cache_data(show_spinner="Cargando trazabilidad...")
 def cargar(origen_bytes: bytes | None, ruta: str | None, tope: bool):
     origen = io.BytesIO(origen_bytes) if origen_bytes is not None else ruta
     crudo = leer_excel(origen)
     lineas_, corte_ = consolidar(crudo, tope_linea=tope)
     return lineas_, corte_, construir_items_po(crudo)
 
+@st.cache_data(show_spinner="Descargando Excel desde OneDrive...")
+def descargar_excel():
 
-subido = st.file_uploader(
-    "Subir TRAZABILIDAD_BASE.xlsx",
-    type=["xlsx"]
-)
+    r = requests.get(URL_EXCEL)
 
-if subido is None:
-    st.info(
-        "Sube TRAZABILIDAD_BASE.xlsx para continuar"
+    r.raise_for_status()
+
+    return BytesIO(r.content)
+
+
+try:
+
+    archivo = descargar_excel()
+
+    lineas, corte_def, items_po = cargar(
+        archivo.getvalue(),
+        None,
+        TOPE_LINEA
     )
-    st.stop()
 
-lineas, corte_def, items_po = cargar(
-    subido.getvalue(),
-    None,
-    TOPE_LINEA
-)
+except Exception as e:
+
+    st.error(
+        f"No fue posible leer TRAZABILIDAD_BASE.xlsx desde OneDrive.\n\n{e}"
+    )
+
+    st.stop()
 
 corte = pd.Timestamp(corte_def).normalize()
 
