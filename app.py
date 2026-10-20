@@ -478,14 +478,22 @@ def cargar(origen_bytes: bytes | None, ruta: str | None, tope: bool):
     return lineas_, corte_, construir_items_po(crudo)
 
 
-if ARCHIVO.exists():
-    lineas, corte_def, items_po = cargar(None, str(ARCHIVO), TOPE_LINEA)
-else:
-    st.error(f"No se encontró {ARCHIVO}. Sube el archivo base para continuar.")
-    subido = st.file_uploader("Archivo base (.xlsx)", type=["xlsx"])
-    if subido is None:
-        st.stop()
-    lineas, corte_def, items_po = cargar(subido.getvalue(), None, TOPE_LINEA)
+subido = st.file_uploader(
+    "Subir TRAZABILIDAD_BASE.xlsx",
+    type=["xlsx"]
+)
+
+if subido is None:
+    st.info(
+        "Sube TRAZABILIDAD_BASE.xlsx para continuar"
+    )
+    st.stop()
+
+lineas, corte_def, items_po = cargar(
+    subido.getvalue(),
+    None,
+    TOPE_LINEA
+)
 
 corte = pd.Timestamp(corte_def).normalize()
 
