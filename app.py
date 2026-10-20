@@ -9,7 +9,6 @@ Ejecutar:  streamlit run app.py
 from __future__ import annotations
 
 import io
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -425,8 +424,19 @@ CSS = f"""
 <style>
 .stApp {{ background:#EEF2F6; }}
 header[data-testid="stHeader"] {{ background:transparent; }}
-[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], [data-testid="collapsedControl"] {{ display:none; }}
-.block-container {{ padding-top:1.2rem; padding-left:1.6rem; padding-right:14rem; max-width:100%; }}
+.block-container {{
+    padding-top:1.2rem;
+    padding-left:1.6rem;
+    padding-right:1.6rem;
+    max-width:100%;
+}}
+[data-testid="stSidebar"] {{
+    background: linear-gradient(
+        180deg,
+        #EAF3FA,
+        #DDEAF5
+    );
+}}
 div[class*="st-key-card"] {{
     background:#FFFFFF; border-radius:18px; padding:16px 22px;
     box-shadow:0 2px 12px rgba(30,60,90,.08); color:{INK};
@@ -464,14 +474,9 @@ div[class*="st-key-kbtn_"] button:hover p {{ color:#FFFFFF; }}
 .pair .pl {{ font-size:.8rem; color:{MUTED}; font-weight:700; }}
 .pair .pv {{ font-size:1.15rem; font-weight:800; }}
 .ksub {{ font-size:.76rem; color:{MUTED}; min-height:1.3rem; }}
-div[class*="st-key-rail_reportes"] {{
-    position:fixed; top:84px; right:16px; width:204px; z-index:1000; background:#FFFFFF;
-    border-radius:16px; padding:14px 16px; box-shadow:0 2px 12px rgba(30,60,90,.14); color:{INK};
-}}
-.rail-t {{ font-weight:800; font-size:1rem; color:{NAVY}; margin-bottom:4px; }}
-div[class*="st-key-rail_reportes"] label p {{ font-size:.92rem; font-weight:600; color:{INK}; }}
 </style>
 """
+
 st.markdown(CSS, unsafe_allow_html=True)
 
 
@@ -1335,7 +1340,13 @@ with st.sidebar:
     st.markdown("---")
 
     reporte = st.radio(
-        "",
+        "Reportes",
         REPORTES,
-        key="reporte_sel"
+        key="reporte_sel",
+        label_visibility="collapsed"
     )
+
+if reporte == REPORTES[0]:
+    _resultado = reporte_fill_rate()
+else:
+    _resultado = reporte_proveedores()
