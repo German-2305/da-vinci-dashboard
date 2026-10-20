@@ -48,8 +48,10 @@ INK, MUTED = "#1E2B3A", "#6B7A8C"
 MESES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
 
 st.set_page_config(
-    page_title="Da Vinci - Gestión de Abastecimiento", page_icon="📊", layout="wide",
-    initial_sidebar_state="collapsed",
+    page_title="Da Vinci - Gestión de Abastecimiento",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
 
 # ##### INICIO LÓGICA (sin Streamlit) #####
@@ -1326,11 +1328,14 @@ def reporte_proveedores():
 # =====================================================
 # SELECTOR DE REPORTES (lista fija a la derecha)
 # =====================================================
-with st.container(key="rail_reportes"):
-    st.markdown('<div class="rail-t">📑 Reportes</div>', unsafe_allow_html=True)
-    reporte = st.radio("Reportes", REPORTES, key="reporte_sel", label_visibility="collapsed")
+with st.sidebar:
 
-if reporte == REPORTES[0]:
-    _resultado = reporte_fill_rate()
-else:
-    _resultado = reporte_proveedores()
+    st.markdown("## 📑 Reportes")
+
+    st.markdown("---")
+
+    reporte = st.radio(
+        "",
+        REPORTES,
+        key="reporte_sel"
+    )
