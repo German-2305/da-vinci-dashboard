@@ -484,14 +484,14 @@ st.markdown(CSS, unsafe_allow_html=True)
 # CARGA (con caché)
 # =====================================================
 
-@st.cache_data(ttl=600, show_spinner="Cargando trazabilidad...")
+@st.cache_data(ttl=3600, show_spinner="Cargando trazabilidad...")
 def cargar(origen_bytes: bytes | None, ruta: str | None, tope: bool):
     origen = io.BytesIO(origen_bytes) if origen_bytes is not None else ruta
     crudo = leer_excel(origen)
     lineas_, corte_ = consolidar(crudo, tope_linea=tope)
     return lineas_, corte_, construir_items_po(crudo)
 
-@st.cache_data(ttl=600, show_spinner="Descargando Excel desde OneDrive...")
+@st.cache_data(ttl=3600, show_spinner="Descargando Excel desde OneDrive...")
 def descargar_excel():
 
     r = requests.get(URL_EXCEL)
