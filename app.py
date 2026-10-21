@@ -296,6 +296,7 @@ def construir_items_po(df: pd.DataFrame) -> pd.DataFrame:
 
     prov = d["PO Suppliers"].fillna("SIN PROVEEDOR").astype(str)
     d["Proveedor"] = prov
+    d["Sitio"] = d["SO Site"].fillna("SIN DATO").astype(str)
     valida = ~_es_falso(d["PO Valid"]) if "PO Valid" in d.columns else True
     d = d[~prov.str.upper().str.contains(STOCK_PROPIO, na=False) & valida]
     d = d[d["PO Number"].notna() & d["PO Item Id"].notna()].copy()
@@ -317,7 +318,7 @@ def construir_items_po(df: pd.DataFrame) -> pd.DataFrame:
         d[n] = d[c].fillna("SIN DATO").astype(str) if c in d.columns else "SIN DATO"
 
     it = d.groupby(["PO Number", "PO Item Id"], sort=False).agg(
-        Proveedor=("Proveedor", "first"), **{"Fecha PO": ("PO Delivery Date", "min")},
+        Proveedor=("Proveedor", "first"), Sitio=("Sitio", "first"),**{"Fecha PO": ("PO Delivery Date", "min")},
         Familia=("Familia", "first"), Grupo=("Grupo", "first"), Ítem=("Ítem", "first"),
         Unidad=("Unidad", "first"), Almacén=("Almacén", "first"),
         **{"Cant PO": ("PO Quantity", "sum"), "Monto PO": ("PO Total Price", "sum"),
@@ -354,7 +355,7 @@ def resumir_pos(it: pd.DataFrame) -> pd.DataFrame:
     t = it.assign(_a=(e == "Atendido").astype(int), _p=(e == "Atendido parcial").astype(int),
                   _s=(e == "Pendiente de atención").astype(int))
     g = t.groupby("PO", sort=False).agg(
-        Proveedor=("Proveedor", "first"), **{"Fecha PO": ("Fecha PO", "first")}, Almacén=("Almacén", "first"),
+        Proveedor=("Proveedor", "first"), Sitio=("Sitio", "first"), **{"Fecha PO": ("Fecha PO", "first")}, Almacén=("Almacén", "first"),
         Mes=("Mes", "first"), Ítems=("Item Id", "size"),
         **{"Ítems atendidos": ("_a", "sum"), "Ítems parciales": ("_p", "sum"), "Ítems pendientes": ("_s", "sum"),
            "Cant PO": ("Cant PO", "sum"), "Cant atendida": ("Cant atendida", "sum"),
@@ -632,7 +633,7 @@ def reporte_fill_rate():
     cont_hero = st.container(key="card_hero")
 
     with st.container(key="card_filtros"):
-        f1, f2, f3, f4, f5, f6 = st.columns([1.35, 1, 1, 1, 1.4, 0.95])
+        f1, f2, f3, f4, f5, f6 = st.columns([1.2, 1, 1.5, 1, 1, 1.2])
         # El casillero se lee primero porque define las fechas y meses disponibles de los demás filtros
         with f6:
             st.markdown('<div style="height:1.75rem"></div>', unsafe_allow_html=True)
@@ -1043,7 +1044,7 @@ def reporte_proveedores():
     mapa_mes = {mes_label(pd.Timestamp(m)): pd.Timestamp(m) for m in meses_base}
 
     with st.container(key="card_filtros"):
-        f1, f2, f3, f4, f5 = st.columns([1.35, 1, 1.7, 1, 1])
+        f1, f2, f3, f4, f5, f6 = st.columns([1.2, 1, 1.5, 1, 1, 1])
         with f1:
             rango = st.date_input(
                 "Fecha de entrega (PO Delivery Date)", value=(f_min, f_max), min_value=f_min, max_value=f_max,
@@ -1058,6 +1059,14 @@ def reporte_proveedores():
         with f5:
             sel_alm = st.multiselect("Almacén (SOE Site)", sorted(base["Almacén"].unique()), key="p_alm",
                                      placeholder="Todos")
+        with f6:
+            sel_site = st.multiselect(
+            "SO Site",
+            sorted(base["Sitio"].dropna().unique()),
+            key="p_site",
+            placeholder="Todos"
+            )
+
 
     # --- Aplicación de filtros ---
     it_ctx = base
@@ -1067,6 +1076,8 @@ def reporte_proveedores():
         it_ctx = it_ctx[it_ctx["Familia"].isin(sel_fam)]
     if sel_alm:
         it_ctx = it_ctx[it_ctx["Almacén"].isin(sel_alm)]
+    if sel_site:
+        it_ctx = it_ctx[it_ctx["Sitio"].isin(sel_site)]
     if it_ctx.empty:
         st.warning("No hay datos con los filtros seleccionados.")
         st.stop()
@@ -1098,6 +1109,8 @@ def reporte_proveedores():
         partes.append(f"Familia: {', '.join(sel_fam)}")
     if sel_alm:
         partes.append(f"Almacén: {', '.join(sel_alm)}")
+    if sel_site:
+        partes.append(f"Site: {', '.join(sel_site)}")
     filtros_txt = " · ".join(partes) or "Todos los proveedores, familias y almacenes"
     with cont_hero:
         st.markdown(
