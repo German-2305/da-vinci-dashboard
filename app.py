@@ -997,25 +997,62 @@ def reporte_fill_rate():
         st.download_button("⬇️ Descargar tabla (Excel)", buf.getvalue(), f"detalle_{col_t.lower()}.xlsx",
                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-    with st.expander("¿Cómo se calculan los KPIs?"):
-        st.markdown(
-            f"""
-- **Todo es valorizado** con las columnas *Total Price* ({MONEDA}), consolidadas por línea (pedido + ítem).
-- **Fill Rate Compras** = RN recepcionado ÷ SO solicitado.
-- **Eficiencia de Despacho** = OF despachado ÷ RN recepcionado.
-- **Confirmación en Operación** = RNO confirmado por operaciones ÷ OF despachado por el almacén central.
-- **Brecha de compras** = SO − RN. **Saldo por despachar** = RN − OF. **Despacho sin confirmar** = OF − RNO (puede incluir mercadería aún en tránsito).
-- Tope 100% por línea: el RN de una línea no cuenta por encima de su SO, el OF no cuenta por encima de su RN y el RNO no cuenta por encima de su OF.
-- **Cumplimiento por cantidad** = suma de unidades atendidas ÷ suma de unidades pedidas, sin distinguir la unidad de medida (con tope por línea). Ejemplo: si se piden 10 und de leche y 90 de aceite y se atienden 5 y 45, da 50 %. Compras: RN ÷ SO; despacho: OF ÷ RN; confirmación: RNO ÷ OF.
-- **Solo entregas vencidas** (casillero en los filtros): mide únicamente las líneas cuya fecha de entrega (SO Delivery Date) es menor o igual a la fecha de corte ({corte:%d/%m/%Y}). Desmarcado, incluye las entregas futuras y los indicadores bajan porque aún no les corresponde llegar.
-- Al pasar el puntero sobre los valorizados de Recepcionado, Brecha, Despachado, Por despachar, Confirmado y Sin confirmar (ventanas de eficiencia) se muestra el % que representan de su base.
-- **Filtros:** fecha de entrega (día o rango), periodo (mes de entrega), familia, almacén (SOE Site), SO Site y casillero de entregas vencidas. Con filtro de fecha activo no se muestra la variación contra el mes anterior.
-- **Sitios:** los almacenes (p. ej. NEWREST ALMACEN LIMA) se eliminan del análisis por sitio.
-- **ALMACEN LIMA** (despachos del stock) cuenta en todos los montos y KPIs generales, pero no aparece como proveedor en el ranking ni en la tabla por proveedor.
-- **Reparto del RNO:** un mismo RNO puede confirmar varios OF de distintas líneas de pedido, pero en la base su monto queda solo en la primera fila. El dashboard lo reparte entre esas líneas en proporción a su OF.
-- **Ventanas de eficiencia:** haz clic en el monto de Recepcionado, Despachado o Confirmado (franja superior) para ver su gauge, donut y distribución.
-            """
-        )
+    with st.expander("¿Qué mide este reporte?"):
+        st.markdown("""
+        ### Reporte Fill Rate - Trazabilidad
+
+        Este reporte permite medir el nivel de cumplimiento de la cadena de abastecimiento desde que un sitio solicita un producto hasta que la operación confirma su recepción.
+
+        #### 1. Compras (SO vs RN)
+        Evalúa qué porcentaje de lo solicitado por los sitios fue efectivamente recepcionado en almacén.
+
+        **Se mide:**
+        - Valor solicitado (SO).
+        - Valor recepcionado (RN).
+        - Fill Rate de compras.
+        - Brecha de compras (productos solicitados pero no recepcionados).
+        - Cumplimiento por cantidad.
+        - Familias, grupos, proveedores, almacenes y sitios con mayor impacto.
+
+        ---
+
+        #### 2. Despachos (RN vs OF)
+        Evalúa qué porcentaje de lo recepcionado fue despachado desde el almacén a los sitios operativos.
+
+        **Se mide:**
+        - Valor recepcionado (RN).
+        - Valor despachado (OF).
+        - Eficiencia de despacho.
+        - Saldo pendiente de despacho.
+        - Cumplimiento por cantidad.
+        - Sitios con mayores saldos por despachar.
+
+        ---
+
+        #### 3. Confirmación de operación (OF vs RNO)
+        Evalúa qué porcentaje de los despachos realizados fue confirmado por la operación.
+
+        **Se mide:**
+        - Valor despachado (OF).
+        - Valor confirmado (RNO).
+        - Nivel de confirmación operativa.
+        - Despachos pendientes de confirmar.
+        - Cumplimiento por cantidad.
+        - Sitios con mayores diferencias entre despacho y confirmación.
+
+        ---
+
+        #### Análisis adicionales
+
+        El reporte también permite identificar:
+
+        - Tendencias mensuales de cumplimiento.
+        - Brechas económicas de abastecimiento.
+        - Principales sitios afectados.
+        - Principales grupos y familias afectadas.
+        - Desempeño por almacén de origen (SOE Site).
+        - Nivel global de trazabilidad del proceso de abastecimiento.
+        """)
 
     return locals()
 
@@ -1326,20 +1363,95 @@ def reporte_proveedores():
                 },
             )
 
-    with st.expander("¿Cómo se evalúa el cumplimiento de proveedores?"):
-        st.markdown(
-            f"""
-- **Qué se mide:** si cada proveedor atendió, con su **RN** (recepción en almacén), lo que pidió la **PO**.
-- **Se evalúan solo las POs vencidas** (PO Delivery Date menor o igual a la fecha de corte, {corte:%d/%m/%Y}). Las POs aún en plazo no cuentan.
-- **Estados de la PO:** *Atendida* (todos sus ítems con RN y por toda la cantidad pedida), *Atendida parcial* (se atendió algo, pero no todo) y *Pendiente de atención* (ningún ítem tiene RN).
-- **Tipo de parcialidad** (columna del detalle): *Cantidades incompletas* (todos los ítems tienen RN, pero alguno por menos cantidad que la PO), *Faltan ítems* (algunos ítems sin RN y el resto completos) o *Faltan ítems y cantidades incompletas* (ambas situaciones).
-- **Estados del ítem:** *Atendido* (RN ≥ PO), *Atendido parcial* (RN menor que la PO) y *Pendiente de atención* (sin RN).
-- **Cumplimiento por cantidad** = unidades atendidas (RN, con tope en lo pedido por ítem) ÷ unidades pedidas, sin distinguir la unidad de medida. **Cumplimiento valorizado** = monto de la PO atendido (valorizado al precio de la PO) ÷ monto de la PO.
-- **Días vencida** = días transcurridos entre el PO Delivery Date y la fecha de corte para lo que sigue sin atender completo.
-- No se consideran proveedores los despachos del stock propio (ALMACEN LIMA), las POs inválidas ni las RN inválidas.
-- Con el filtro de **Familia** o **Almacén**, la PO se evalúa solo con los ítems que cumplen ese filtro.
-            """
-        )
+        with st.expander("¿Qué mide este reporte?"):
+            st.markdown("""
+            ### Reporte de Cumplimiento de Proveedores
+
+            Este reporte permite evaluar qué tan bien los proveedores atienden las órdenes de compra emitidas por la compañía.
+
+            La evaluación se realiza comparando:
+
+            **PO (Purchase Order)**
+            vs
+            **RN (Receipt Note)**
+
+            Es decir, lo solicitado al proveedor versus lo realmente entregado y recepcionado en almacén.
+
+            ---
+
+            #### Cumplimiento de órdenes de compra
+
+            Se mide:
+
+            - Número de POs evaluadas.
+            - POs atendidas completamente.
+            - POs atendidas parcialmente.
+            - POs pendientes de atención.
+            - Porcentaje de cumplimiento de proveedores.
+
+            ---
+
+            #### Cumplimiento por cantidad
+
+            Permite identificar:
+
+            - Unidades solicitadas.
+            - Unidades recepcionadas.
+            - Cantidades faltantes.
+            - Nivel de cumplimiento físico de cada proveedor.
+
+            ---
+
+            #### Cumplimiento valorizado
+
+            Permite medir:
+
+            - Monto total solicitado.
+            - Monto efectivamente atendido.
+            - Monto pendiente de atención.
+            - Impacto económico del incumplimiento.
+
+            ---
+
+            #### Análisis por proveedor
+
+            El reporte identifica:
+
+            - Proveedores con mayor cantidad de POs incompletas.
+            - Proveedores con mayor monto pendiente.
+            - Proveedores con mejor y peor desempeño.
+            - Tiempo promedio de atraso en entregas.
+
+            ---
+
+            #### Análisis por orden de compra
+
+            Permite revisar:
+
+            - Estado individual de cada PO.
+            - Estado de cada ítem de la PO.
+            - Cantidades atendidas.
+            - Cantidades pendientes.
+            - Días de atraso.
+            - Motivo de incumplimiento.
+
+            ---
+
+            #### Tendencia histórica
+
+            El dashboard muestra:
+
+            - Evolución mensual del cumplimiento.
+            - Evolución de órdenes atendidas.
+            - Evolución de órdenes pendientes.
+            - Comportamiento histórico por proveedor.
+
+            ---
+
+            #### Objetivo
+
+            Identificar oportunidades de mejora en el abastecimiento y monitorear el nivel de servicio de los proveedores para asegurar la disponibilidad oportuna de materiales y productos.
+            """)
     return locals()
 
 
