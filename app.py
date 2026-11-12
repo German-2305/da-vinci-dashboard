@@ -495,7 +495,19 @@ def cargar(origen_bytes: bytes | None, ruta: str | None, tope: bool):
 @st.cache_data(ttl=3600, show_spinner="Descargando Excel desde OneDrive...")
 def descargar_excel():
 
-    r = requests.get(URL_EXCEL)
+    r = requests.get(
+        URL_EXCEL,
+        allow_redirects=True
+    )
+
+    st.write("Status:", r.status_code)
+    st.write("Content-Type:", r.headers.get("Content-Type"))
+    st.write("URL final:", r.url)
+
+    try:
+        st.code(r.text[:500])
+    except:
+        pass
 
     r.raise_for_status()
 
