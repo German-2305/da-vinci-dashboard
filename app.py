@@ -22,7 +22,7 @@ from plotly.subplots import make_subplots
 # CONFIG
 # =====================================================
 URL_EXCEL = (
-    "https://newrestgroup-my.sharepoint.com/:x:/g/personal/"
+    "https://newrestgroup-my.sharepoint.com/:x:/g/personal/almacen_lima5_newrest_eu/IQDMCYC2597RS4_uvH3npDsVAQ-A3cHtvq4xjfflz3oJ5x0?e=ZmNLdy"
     "almacen_lima5_newrest_eu/"
     "IQDMCYC2597RS4_uvH3npDsVAQ-A3cHtvq4xjfflz3oJ5x0"
     "?download=1"
